@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FIIA — Fondo de Inversión Agricultura Alimentos América · iAGRI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#030510;color:#c8d5f0;}
+.raj{font-family:'Rajdhani',sans-serif;}
+.mono{font-family:'Space Mono','Courier New',monospace;}
+:root{
+  --bg:#030510;--bg2:#06091a;--bg3:#0a0f28;
+  --gold:#ffd700;--gold2:#ffec6e;--gold3:rgba(255,215,0,.15);
+  --green:#00e676;--red:#ff1744;--blue:#2979ff;--teal:#00bcd4;
+  --purple:#7c4dff;--orange:#ff6d00;
+  --border:rgba(255,215,0,.12);--border2:rgba(255,255,255,.06);
+  --muted:#3a4a6a;--text:#c8d5f0;
+}
+/* ── LAYOUT ── */
+.sb{width:248px;min-height:100vh;background:linear-gradient(180deg,#020410,#050818 60%,#07101e);position:fixed;top:0;left:0;z-index:40;display:flex;flex-direction:column;border-right:1px solid var(--border);}
+.main{margin-left:248px;min-height:100vh;}
+.topbar{background:rgba(3,5,16,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:8px 22px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:30;}
+/* ── CARDS ── */
+.card{background:var(--bg2);border-radius:12px;border:1px solid var(--border2);padding:16px;}
+.card-gold{background:linear-gradient(135deg,rgba(255,215,0,.06),rgba(255,215,0,.02));border:1px solid rgba(255,215,0,.2);border-radius:14px;padding:16px;}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.b-gold{background:rgba(255,215,0,.12);color:#ffd700;border:1px solid rgba(255,215,0,.3);}
+.b-ok{background:rgba(0,230,118,.1);color:#00e676;border:1px solid rgba(0,230,118,.25);}
+.b-warn{background:rgba(255,109,0,.1);color:#ff6d00;border:1px solid rgba(255,109,0,.25);}
+.b-crit{background:rgba(255,23,68,.1);color:#ff1744;border:1px solid rgba(255,23,68,.25);}
+.b-blue{background:rgba(41,121,255,.1);color:#2979ff;border:1px solid rgba(41,121,255,.25);}
+.b-purple{background:rgba(124,77,255,.1);color:#7c4dff;border:1px solid rgba(124,77,255,.25);}
+.b-gray{background:rgba(58,74,106,.1);color:#3a4a6a;border:1px solid rgba(58,74,106,.2);}
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.15s;font-family:inherit;}
+.btn-gold{background:linear-gradient(90deg,#b8860b,#ffd700);color:#030510;}
+.btn-gold:hover{filter:brightness(1.1);}
+.btn-g{background:linear-gradient(90deg,#00832e,#00e676);color:#020a04;}
+.btn-o{background:transparent;color:#ffd700;border:1.5px solid rgba(255,215,0,.35);}
+.btn-r{background:rgba(255,23,68,.12);color:#ff1744;border:1px solid rgba(255,23,68,.28);}
+.btn-sm{padding:4px 10px;font-size:10px;border-radius:6px;}
+/* ── FORMS ── */
+input,select,textarea{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 11px;font-size:12px;width:100%;outline:none;transition:.2s;color:#c8d5f0;font-family:inherit;}
+input:focus,select:focus{border-color:rgba(255,215,0,.4);background:rgba(255,215,0,.03);}
+select option{background:#06091a;}
+label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 11px;text-align:left;background:rgba(255,215,0,.03);color:var(--muted);font-weight:700;font-size:10px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,215,0,.1);}
+.tbl td{padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.tbl tr:hover td{background:rgba(255,215,0,.02);}
+/* ── SIDEBAR ── */
+.nit{display:flex;align-items:center;gap:8px;padding:7px 11px;cursor:pointer;border-radius:7px;margin:1px 6px;color:rgba(255,255,255,.38);transition:.12s;font-size:12px;font-weight:500;}
+.nit:hover{background:rgba(255,215,0,.07);color:#fff;}
+.nit.on{background:linear-gradient(90deg,rgba(255,215,0,.18),rgba(255,215,0,.05));color:#ffd700;border-left:2px solid #ffd700;padding-left:9px;}
+.sh{font-size:9px;color:rgba(255,255,255,.18);padding:10px 11px 3px;letter-spacing:1.3px;text-transform:uppercase;font-weight:800;}
+/* ── LOGIN ── */
+.login-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(255,215,0,.08),transparent),linear-gradient(180deg,#020410,#060a1e);}
+/* ── MISC ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:#06091a;border-radius:16px;padding:22px;max-width:820px;width:100%;max-height:92vh;overflow-y:auto;border:1px solid rgba(255,215,0,.2);box-shadow:0 32px 80px rgba(0,0,0,.8);}
+.prog{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:.3s;}
+.kpi{background:var(--bg2);border-radius:11px;border:1px solid var(--border2);padding:14px;cursor:pointer;transition:.15s;}
+.kpi:hover{border-color:rgba(255,215,0,.3);}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);background:#06091a;color:#c8d5f0;padding:8px 18px;border-radius:22px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;border:1px solid rgba(255,215,0,.2);max-width:90vw;}
+/* ── MARKET TICKER ── */
+.ticker-item{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-right:1px solid rgba(255,215,0,.1);}
+/* ── TOKEN CARD ── */
+.token-card{background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,215,0,.02));border:1px solid rgba(255,215,0,.2);border-radius:14px;padding:16px;position:relative;overflow:hidden;}
+.token-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:rgba(255,215,0,.04);}
+/* ── TWIN MAP ── */
+.nave-cell{border-radius:8px;cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;font-size:9px;font-weight:700;}
+.nave-cell:hover{filter:brightness(1.3);transform:scale(1.05);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login" class="login-bg">
+<div style="width:100%;max-width:450px;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <!-- FIIA Logo -->
+    <svg width="70" height="70" viewBox="0 0 100 100" style="margin:0 auto 10px;display:block;">
+      <defs>
+        <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#b8860b"/>
+          <stop offset="50%" style="stop-color:#ffd700"/>
+          <stop offset="100%" style="stop-color:#ffec6e"/>
+        </linearGradient>
+        <linearGradient id="fg2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffd700"/>
+          <stop offset="100%" style="stop-color:#00e676"/>
+        </linearGradient>
+      </defs>
+      <polygon points="50,5 93,28 93,72 50,95 7,72 7,28" fill="none" stroke="url(#fg)" stroke-width="2.5"/>
+      <polygon points="50,15 83,32.5 83,67.5 50,85 17,67.5 17,32.5" fill="rgba(255,215,0,.06)" stroke="url(#fg2)" stroke-width="1.5"/>
+      <text x="50" y="56" text-anchor="middle" font-family="Rajdhani,sans-serif" font-size="20" font-weight="700" fill="url(#fg)">FIIA</text>
+      <circle cx="50" cy="20" r="3" fill="#ffd700" opacity=".8"/>
+      <circle cx="79" cy="62" r="2.5" fill="#00e676" opacity=".8"/>
+      <circle cx="21" cy="62" r="2.5" fill="#00e676" opacity=".8"/>
+    </svg>
+    <div class="raj" style="font-size:26px;font-weight:700;color:#ffd700;letter-spacing:2px;">FIIA</div>
+    <div style="font-size:11px;color:rgba(255,215,0,.6);letter-spacing:1.5px;text-transform:uppercase;">Fondo de Inversión · Agricultura · Alimentos · América</div>
+    <div style="font-size:9px;color:rgba(255,255,255,.2);margin-top:4px;">Powered by Akasha · iAGRI Ecosystem</div>
+  </div>
+  <div style="background:rgba(3,5,16,.92);border:1px solid rgba(255,215,0,.2);border-radius:16px;padding:26px;">
+    <div style="margin-bottom:11px;"><label>Usuario</label><input id="l-u" type="text" value="admin@iagri.app"></div>
+    <div style="margin-bottom:11px;"><label>Contraseña</label><input id="l-p" type="password" value="iAGRI2026!"></div>
+    <div style="margin-bottom:16px;"><label>Rol</label>
+      <select id="l-rol">
+        <option value="director">🧠 Alejandría — Directora FIIA / CSO</option>
+        <option value="gestor" selected>💼 Gestor de Inversiones</option>
+        <option value="socio">🏆 Socio / Inversionista</option>
+        <option value="buda">📊 Buda — Contralor Financiero</option>
+        <option value="compliance">🔍 Oficial de Cumplimiento (AML/KYC)</option>
+      </select>
+    </div>
+    <button id="btn-login" style="width:100%;padding:12px;background:linear-gradient(90deg,#b8860b,#ffd700);color:#030510;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.5px;">INGRESAR → FIIA</button>
+    <div id="l-err" style="display:none;color:#ff1744;font-size:11px;text-align:center;margin-top:8px;">Credenciales inválidas</div>
+  </div>
+  <div style="text-align:center;margin-top:10px;font-size:9px;color:rgba(255,255,255,.15);">BaaS · Tokenización · AgriLending · Smart Contracts · KYC/AML</div>
+</div>
+</div>
+
+<!-- APP -->
+<div id="pg-app" style="display:none;">
+<div class="sb">
+  <div style="padding:11px 10px 8px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <svg width="34" height="34" viewBox="0 0 100 100"><defs><linearGradient id="sbfg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#b8860b"/><stop offset="100%" style="stop-color:#ffd700"/></linearGradient></defs><polygon points="50,5 93,28 93,72 50,95 7,72 7,28" fill="none" stroke="url(#sbfg)" stroke-width="2.5"/><text x="50" y="59" text-anchor="middle" font-family="Rajdhani,sans-serif" font-size="22" font-weight="700" fill="url(#sbfg)">FIIA</text></svg>
+      <div><div class="raj" style="font-size:14px;font-weight:700;color:#ffd700;letter-spacing:1px;">FIIA</div><div style="font-size:8px;color:rgba(255,215,0,.45);letter-spacing:.8px;text-transform:uppercase;">Inversión · Agricultura · Américas</div></div>
+    </div>
+  </div>
+  <nav style="flex:1;padding:4px 0;overflow-y:auto;scrollbar-width:thin;">
+    <div class="sh">Fondo</div>
+    <div class="nit on" id="nav-dash" onclick="go('dash')"><span>📊</span><span>Dashboard FIIA</span></div>
+    <div class="nit" id="nav-programs" onclick="go('programs')"><span>🚀</span><span>Programas</span></div>
+    <div class="nit" id="nav-investors" onclick="go('investors')"><span>🏆</span><span id="nav-inv-lbl">Inversores</span></div>
+    <div class="sh">Portfolio & Mercados</div>
+    <div class="nit" id="nav-tokens" onclick="go('tokens')"><span>💎</span><span id="nav-tok-lbl">Token Assets</span></div>
+    <div class="nit" id="nav-market" onclick="go('market')"><span>📈</span><span>Mercados & Commodities</span></div>
+    <div class="sh">Crédito & Productores</div>
+    <div class="nit" id="nav-lending" onclick="go('lending')"><span>🏦</span><span id="nav-loan-lbl">AgriLending</span></div>
+    <div class="nit" id="nav-farmers" onclick="go('farmers')"><span>🌱</span><span id="nav-farm-lbl">Productores Externos</span></div>
+    <div class="nit" id="nav-contracts" onclick="go('contracts')"><span>📋</span><span>Contratos de Cultivo</span></div>
+    <div class="sh">Operaciones</div>
+    <div class="nit" id="nav-wallets" onclick="go('wallets')"><span>💰</span><span>Billeteras FIIA</span></div>
+    <div class="nit" id="nav-governance" onclick="go('governance')"><span>🗳️</span><span>Gobernanza & Votación</span></div>
+    <div class="nit" id="nav-twin" onclick="go('twin')"><span>🗺️</span><span>Gemelo Digital</span></div>
+    <div class="nit" id="nav-akasha" onclick="go('akasha')"><span>🧠</span><span>Akasha — Fund AI</span></div>
+  </nav>
+  <div style="padding:8px 10px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+      <div id="sb-av" style="width:32px;height:32px;border-radius:50%;background:rgba(255,215,0,.12);display:flex;align-items:center;justify-content:center;font-size:14px;border:1.5px solid rgba(255,215,0,.3);">💼</div>
+      <div><div style="color:#e8f0fa;font-size:11px;font-weight:700;" id="sb-name">Gestor</div><div class="raj" style="color:rgba(255,215,0,.55);font-size:9px;letter-spacing:.5px;" id="sb-rol">GESTOR</div></div>
+    </div>
+    <div style="display:flex;gap:3px;margin-bottom:5px;">
+      <a href="https://www.agricola.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:8px;color:#00e676;background:rgba(0,230,118,.07);padding:3px;border-radius:4px;border:1px solid rgba(0,230,118,.12);text-decoration:none;">🌿</a>
+      <a href="https://laboratorio.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:8px;color:#c084fc;background:rgba(192,132,252,.07);padding:3px;border-radius:4px;border:1px solid rgba(192,132,252,.12);text-decoration:none;">🔬</a>
+      <a href="https://comercial.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:8px;color:#60a5fa;background:rgba(96,165,250,.07);padding:3px;border-radius:4px;border:1px solid rgba(96,165,250,.12);text-decoration:none;">🏪</a>
+      <a href="https://www.agroindustria.iagri.pro" target="_blank" style="flex:1;text-align:center;font-size:8px;color:#00bcd4;background:rgba(0,188,212,.07);padding:3px;border-radius:4px;border:1px solid rgba(0,188,212,.12);text-decoration:none;">🏭</a>
+    </div>
+    <button onclick="doLogout()" style="width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border2);color:rgba(255,255,255,.3);border-radius:5px;padding:4px;font-size:9px;cursor:pointer;">↩ Salir</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Topbar + Market Ticker -->
+  <div class="topbar">
+    <div class="raj" style="font-size:16px;font-weight:700;color:#ffd700;" id="topbar-title">Dashboard FIIA</div>
+    <div style="flex:1;overflow:hidden;margin:0 12px;">
+      <div id="market-ticker" style="display:flex;white-space:nowrap;font-size:10px;font-family:monospace;"></div>
+    </div>
+    <div id="clock" style="font-size:10px;color:#ffd700;font-family:monospace;background:rgba(255,215,0,.07);padding:3px 8px;border-radius:5px;border:1px solid rgba(255,215,0,.15);">--:--</div>
+    <span id="topbar-badge" class="badge b-gold" style="font-size:9px;">FIIA</span>
+  </div>
+
+  <div style="padding:16px 22px;" id="content">
+
+    <!-- DASHBOARD -->
+    <div id="sec-dash">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;" id="dash-kpis"></div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;">
+        <div id="dash-portfolio-card" class="card">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">💎 Portfolio Token Assets</div>
+          <div id="dash-portfolio"></div>
+        </div>
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📈 Mercados Live</div>
+          <div id="dash-market-live"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        <div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">🏆 Top Inversores</div><div id="dash-investors-top"></div></div>
+        <div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">🏦 AgriLending Status</div><div id="dash-lending-widget"></div></div>
+        <div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">🗳️ Gobernanza Activa</div><div id="dash-gov-widget"></div></div>
+      </div>
+    </div>
+
+    <!-- PROGRAMS -->
+    <div id="sec-programs" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div><div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;">🚀 Programas de Financiamiento</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Fondo Capital · TokenSale · AgriLending · Bonos</div></div>
+        <button class="btn btn-gold btn-sm" onclick="showModalProgram()">+ Nuevo Programa</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;" id="programs-grid"></div>
+    </div>
+
+    <!-- INVESTORS -->
+    <div id="sec-investors" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div><div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;">🏆 Inversores FIIA</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Socios · Fondos · Institucionales · Ángeles</div></div>
+        <button class="btn btn-gold btn-sm" onclick="showModalInvestor()">+ Registrar Inversor</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th>Código</th><th>Inversor</th><th>Tipo</th><th>Capital</th><th>Tokens</th><th>ROI</th><th>Programa</th><th>Auto-Reinv.</th><th>Nivel</th></tr></thead><tbody id="investors-tbody"></tbody></table></div>
+    </div>
+
+    <!-- TOKENS -->
+    <div id="sec-tokens" style="display:none;">
+      <div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;margin-bottom:4px;">💎 Token Assets — Activos Tokenizados</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Interés Compuesto Biológico · Propiedad Fraccionada · Rendimiento real vs proyectado</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="tokens-grid"></div>
+    </div>
+
+    <!-- MARKET -->
+    <div id="sec-market" style="display:none;">
+      <div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;margin-bottom:4px;">📈 Mercados & Commodities</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">MercaMálaga · NYMEX · CME · Precios en tiempo real · Alertas de rentabilidad</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;" id="market-cards"></div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Simulador de Rentabilidad "What-If"</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:flex-end;margin-bottom:10px;">
+          <div><label>Commodity</label><select id="sim-comm" style="font-size:11px;padding:6px;"><option>Tomate Cherry</option><option>Tomate San Marzano</option><option>Pepino</option><option>Lechuga</option></select></div>
+          <div><label>Variación precio (%)</label><input id="sim-var" type="number" value="-10" placeholder="-10" style="padding:6px;"></div>
+          <div><label>Volumen kg</label><input id="sim-vol" type="number" value="42000" style="padding:6px;"></div>
+          <button class="btn btn-gold btn-sm" onclick="simularMercado()" style="margin-bottom:1px;">⚡ Simular</button>
+        </div>
+        <div id="sim-result"></div>
+      </div>
+    </div>
+
+    <!-- LENDING -->
+    <div id="sec-lending" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div><div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;">🏦 AgriLending — Créditos FIIA</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Microcréditos JIT · Garantía cosecha futura · Colateral tokens</div></div>
+        <button class="btn btn-gold btn-sm" onclick="showModalLoan()">+ Nuevo Crédito</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;" id="lending-kpis"></div>
+      <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th>Código</th><th>Prestatario</th><th>Tipo</th><th>Principal</th><th>Tasa</th><th>Saldo</th><th>Cuota</th><th>Estado</th><th>Mora</th><th></th></tr></thead><tbody id="lending-tbody"></tbody></table></div>
+    </div>
+
+    <!-- FARMERS -->
+    <div id="sec-farmers" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div><div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;">🌱 Productores Externos</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Contract Farming · Agri-CRM · KYC · Asistencia técnica IA</div></div>
+        <button class="btn btn-gold btn-sm" onclick="showModalFarmer()">+ Registrar Productor</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="farmers-grid"></div>
+    </div>
+
+    <!-- CONTRACTS -->
+    <div id="sec-contracts" style="display:none;">
+      <div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;margin-bottom:4px;">📋 Contratos de Cultivo</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Forward contracts · Precio acordado · Liquidación automática FIIA</div>
+      <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th>Código</th><th>Productor</th><th>Cultivo</th><th>Comprometido</th><th>Precio</th><th>Entrega</th><th>Avance</th><th>Estado</th><th>Liquidado</th></tr></thead><tbody id="contracts-tbody"></tbody></table></div>
+    </div>
+
+    <!-- WALLETS -->
+    <div id="sec-wallets" style="display:none;">
+      <div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;margin-bottom:4px;">💰 Billeteras FIIA</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">BaaS · KYC · Split Payments · Reinversión · DSO / DPO</div>
+      <div id="wallets-content"></div>
+    </div>
+
+    <!-- GOVERNANCE -->
+    <div id="sec-governance" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div><div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;">🗳️ Gobernanza & Votación</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Democracia por tokens · Decisiones del fondo · Aprobación de gastos</div></div>
+        <button class="btn btn-gold btn-sm" onclick="showModalVote()">+ Nueva Propuesta</button>
+      </div>
+      <div id="governance-list"></div>
+    </div>
+
+    <!-- DIGITAL TWIN -->
+    <div id="sec-twin" style="display:none;">
+      <div class="raj" style="font-size:22px;font-weight:700;color:#ffd700;margin-bottom:4px;">🗺️ Gemelo Digital — 78 Ha Hidroexpo</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Estado en tiempo real · Capas fenológicas · Alertas IoT · Valor financiero por nave</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;">
+        <div class="card" id="twin-map-card"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="twin-detail"></div>
+      </div>
+    </div>
+
+    <!-- AKASHA AI -->
+    <div id="sec-akasha" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;height:calc(100vh - 140px);">
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border2);">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(0,230,118,.1));display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid rgba(255,215,0,.35);">🧠</div>
+            <div><div class="raj" style="font-size:14px;font-weight:700;color:#ffd700;">Akasha — Fund AI Manager</div><div style="font-size:10px;color:#00e676;">● En línea · Gestión FIIA + Mercados + Crédito</div></div>
+          </div>
+          <div id="chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;scrollbar-width:thin;"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input id="chat-input" type="text" placeholder="Pregunta financiera a Akasha FIIA..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="btn btn-gold" onclick="sendChat()" id="chat-btn" style="padding:8px 14px;">→</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;" id="chat-quick"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;">Estado del Fondo</div><div id="akasha-fund-state"></div></div>
+          <div class="card" style="flex:1;"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;">Análisis de Mercado</div><div id="akasha-market"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+</div><!-- main -->
+</div><!-- app -->
+
+<!-- MODALS -->
+<div id="modal-bg" style="display:none;" class="modal-bg">
+  <div class="modal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><div class="raj" style="font-size:16px;font-weight:700;color:#ffd700;" id="modal-title">Modal</div><button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:none;border-radius:6px;padding:5px 9px;cursor:pointer;color:#94a3b8;font-size:14px;">✕</button></div><div id="modal-content"></div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+var SURL='https://crfghwtfqaplzsmwylxe.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZmdod3RmcWFwbHpzbXd5bHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjc1MjksImV4cCI6MjA5MDkwMzUyOX0.WUNkTqU93H92nohb_Idqhu8nV1JblFvVRk6Lf_PJw64';
+var db=null;
+(function(){try{if(window.supabase&&window.supabase.createClient)db=window.supabase.createClient(SURL,SKEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});}catch(e){}})();
+function dbQ(fn){if(!db)return Promise.resolve({data:null,error:'offline'});try{return fn(db);}catch(e){return Promise.resolve({data:null,error:String(e)});}}
+function v(id){var e=document.getElementById(id);return e?e.value:'';}
+function _n(id){var n=parseFloat(v(id));return isNaN(n)?null:n;}
+
+// ══ SIM DATA ══
+var SIM_TOKENS=[
+  {token_id:'tok-inv01',up_id:'cu-01',nombre:'Token INV-01 — Tomate Cherry Premium',tipo_activo:'Invernadero',valor_nominal:250000,tokens_totales:1000,tokens_circulacion:680,precio_token_usd:268.5,yield_estimado:42.0,yield_real:38.5,area_m2:10000,cultivo:'Tomate Cherry',estado:'Activo',fase_cultivo:'EnCosecha',avance_ciclo_pct:78,fecha_cosecha_est:'2026-06-15',precio_export_usd:2.15},
+  {token_id:'tok-inv03',up_id:'cu-02',nombre:'Token INV-03 — Tomate San Marzano',tipo_activo:'Invernadero',valor_nominal:250000,tokens_totales:1000,tokens_circulacion:750,precio_token_usd:275.0,yield_estimado:44.0,yield_real:41.2,area_m2:10000,cultivo:'Tomate San Marzano',estado:'Activo',fase_cultivo:'EnCosecha',avance_ciclo_pct:85,fecha_cosecha_est:'2026-05-30',precio_export_usd:2.25},
+  {token_id:'tok-inv14',up_id:'cu-04',nombre:'Token INV-14 — Mix Premium Export',tipo_activo:'Invernadero',valor_nominal:280000,tokens_totales:1000,tokens_circulacion:900,precio_token_usd:285.5,yield_estimado:48.0,yield_real:45.8,area_m2:10000,cultivo:'Mix Tomate/Pepino',estado:'Activo',fase_cultivo:'EnCosecha',avance_ciclo_pct:92,fecha_cosecha_est:'2026-05-20',precio_export_usd:2.30},
+  {token_id:'tok-cm01',up_id:'cu-05',nombre:'Token CM-01 — Lechuga Hidropónica',tipo_activo:'CasaMalla',valor_nominal:180000,tokens_totales:800,tokens_circulacion:520,precio_token_usd:245.0,yield_estimado:38.0,yield_real:35.2,area_m2:8000,cultivo:'Lechuga Mantecosa',estado:'Activo',fase_cultivo:'EnProceso',avance_ciclo_pct:55,fecha_cosecha_est:'2026-07-01',precio_export_usd:1.85},
+  {token_id:'tok-ca01',up_id:'cu-06',nombre:'Token CA-01 — Cultivos Abiertos',tipo_activo:'CampoAbierto',valor_nominal:120000,tokens_totales:600,tokens_circulacion:310,precio_token_usd:215.0,yield_estimado:32.0,yield_real:29.8,area_m2:43750,cultivo:'Múltiples',estado:'Activo',fase_cultivo:'Siembra',avance_ciclo_pct:25,fecha_cosecha_est:'2026-09-30',precio_export_usd:1.50}
+];
+var SIM_MARKET=[
+  {commodity:'Tomate Cherry',mercado:'MercaMalaga',precio_actual:2.15,precio_ayer:2.08,variacion_pct:3.37,unidad:'USD/kg',volatilidad:8.5,tendencia:'Alcista',alerta_activa:false},
+  {commodity:'Tomate San Marzano',mercado:'MercaMalaga',precio_actual:2.25,precio_ayer:2.22,variacion_pct:1.35,unidad:'USD/kg',volatilidad:6.2,tendencia:'Alcista',alerta_activa:false},
+  {commodity:'Pepino',mercado:'MercaMalaga',precio_actual:1.85,precio_ayer:1.90,variacion_pct:-2.63,unidad:'USD/kg',volatilidad:9.8,tendencia:'Bajista',alerta_activa:false},
+  {commodity:'Lechuga',mercado:'MercaMalaga',precio_actual:1.85,precio_ayer:1.82,variacion_pct:1.65,unidad:'USD/kg',volatilidad:7.1,tendencia:'Estable',alerta_activa:false},
+  {commodity:'Tomate Cherry',mercado:'NYSE_CME',precio_actual:1.98,precio_ayer:2.01,variacion_pct:-1.49,unidad:'USD/kg',volatilidad:12.3,tendencia:'Bajista',alerta_activa:true},
+  {commodity:'Biodiésel',mercado:'NYMEX',precio_actual:0.92,precio_ayer:0.91,variacion_pct:1.10,unidad:'USD/L',volatilidad:5.5,tendencia:'Estable',alerta_activa:false}
+];
+var SIM_LOANS=[
+  {loan_id:'loan-001',codigo:'FIIA-LOAN-001',borrower_nombre:'Socio #003 — INV-05',tipo_prestamo:'Insumos',monto_principal:12000,tasa_interes:3.5,plazo_meses:6,garantia:'Cosecha futura INV-05',saldo_pendiente:8400,cuota_mensual:2100,estado:'AlDia',mora_dias:0,fecha_vencimiento:'2026-07-15'},
+  {loan_id:'loan-002',codigo:'FIIA-LOAN-002',borrower_nombre:'Cooperativa Lechuga SV',tipo_prestamo:'CapitalTrabajo',monto_principal:25000,tasa_interes:4.0,plazo_meses:12,garantia:'Tokens CM-01',saldo_pendiente:22000,cuota_mensual:2200,estado:'AlDia',mora_dias:0,fecha_vencimiento:'2027-02-01'},
+  {loan_id:'loan-003',codigo:'FIIA-LOAN-003',borrower_nombre:'José Flores — Productor',tipo_prestamo:'Productor',monto_principal:5500,tasa_interes:5.0,plazo_meses:4,garantia:'Cosecha comprometida',saldo_pendiente:3500,cuota_mensual:950,estado:'Mora',mora_dias:18,fecha_vencimiento:'2026-05-20'},
+  {loan_id:'loan-004',codigo:'FIIA-LOAN-004',borrower_nombre:'María Rodríguez — Productora',tipo_prestamo:'Productor',monto_principal:3200,tasa_interes:5.0,plazo_meses:3,garantia:'Contrato cultivo',saldo_pendiente:0,cuota_mensual:0,estado:'Pagado',mora_dias:0,fecha_vencimiento:'2026-02-15'}
+];
+var SIM_FARMERS=[
+  {farmer_id:'farm-001',codigo:'FARM-001',nombre:'José Flores Rivera',telefono:'+503 7890-1234',departamento:'La Paz',area_finca_ha:2.5,cultivos_arr:['Tomate Cherry','Pepino'],kyc_status:'Verificado',credit_score:680,saldo_prestamos:3500,total_cosechas:4,kg_entregados:18500,calidad_promedio:8.2,estado:'Activo'},
+  {farmer_id:'farm-002',codigo:'FARM-002',nombre:'Cooperativa Verde El Salvador',telefono:'+503 2250-8800',departamento:'Cuscatlán',area_finca_ha:12.0,cultivos_arr:['Lechuga','Espinaca','Albahaca'],kyc_status:'Verificado',credit_score:750,saldo_prestamos:22000,total_cosechas:8,kg_entregados:85000,calidad_promedio:9.1,estado:'Activo'},
+  {farmer_id:'farm-003',codigo:'FARM-003',nombre:'María Rodríguez Mejía',telefono:'+503 7612-3456',departamento:'Santa Ana',area_finca_ha:1.8,cultivos_arr:['Tomate San Marzano'],kyc_status:'Verificado',credit_score:720,saldo_prestamos:0,total_cosechas:6,kg_entregados:28000,calidad_promedio:8.8,estado:'Activo'},
+  {farmer_id:'farm-004',codigo:'FARM-004',nombre:'Carlos Hernández López',telefono:'+503 7234-5678',departamento:'San Vicente',area_finca_ha:3.2,cultivos_arr:['Pepino','Zucchini'],kyc_status:'Pendiente',credit_score:550,saldo_prestamos:0,total_cosechas:0,kg_entregados:0,calidad_promedio:null,estado:'EnProceso'},
+  {farmer_id:'farm-005',codigo:'FARM-005',nombre:'Finca Agroecológica Norte',telefono:'+503 2340-9900',departamento:'Chalatenango',area_finca_ha:8.5,cultivos_arr:['Mix Hortalizas','Hierbas'],kyc_status:'Verificado',credit_score:690,saldo_prestamos:0,total_cosechas:2,kg_entregados:12000,calidad_promedio:7.5,estado:'Activo'}
+];
+var SIM_CONTRACTS=[
+  {contract_id:'cc-001',codigo:'CC-2026-001',farmer_id:'farm-001',cultivo:'Tomate Cherry Export',kg_comprometidos:8000,precio_acordado:1.95,fecha_entrega:'2026-06-30',avance_pct:45,estado:'Activo',kg_entregados:3600,monto_adelanto:3000,monto_liquidado:7020},
+  {contract_id:'cc-002',codigo:'CC-2026-002',farmer_id:'farm-002',cultivo:'Lechuga Mantecosa Hidro',kg_comprometidos:25000,precio_acordado:1.70,fecha_entrega:'2026-08-31',avance_pct:20,estado:'Activo',kg_entregados:5000,monto_adelanto:8000,monto_liquidado:8500},
+  {contract_id:'cc-003',codigo:'CC-2026-003',farmer_id:'farm-003',cultivo:'Tomate San Marzano Premium',kg_comprometidos:12000,precio_acordado:2.10,fecha_entrega:'2026-05-31',avance_pct:90,estado:'Activo',kg_entregados:10800,monto_adelanto:0,monto_liquidado:22680},
+  {contract_id:'cc-004',codigo:'CC-2026-004',farmer_id:'farm-005',cultivo:'Mix Hortalizas Ecológico',kg_comprometidos:6000,precio_acordado:1.65,fecha_entrega:'2026-09-30',avance_pct:5,estado:'Activo',kg_entregados:300,monto_adelanto:0,monto_liquidado:495}
+];
+var SIM_INVESTORS=[
+  {investor_id:'inv-001',codigo:'FIIA-INV-001',nombre:'Fondo FIAA Institucional',tipo:'Fondo',pais:'El Salvador',kyc_status:'Verificado',capital_invertido:8500000,tokens_poseidos:12500,rendimiento_total:850000,roi_actual:10.0,auto_reinversion:true,nivel:'Institucional',programa_activo:'Fondo Expansión 2026'},
+  {investor_id:'inv-002',codigo:'FIIA-INV-002',nombre:'Javier Mena — Socio Fundador',tipo:'Individual',pais:'El Salvador',kyc_status:'Verificado',capital_invertido:350000,tokens_poseidos:750,rendimiento_total:42000,roi_actual:12.0,auto_reinversion:true,nivel:'Premium',programa_activo:'Programa Socios'},
+  {investor_id:'inv-003',codigo:'FIIA-INV-003',nombre:'Distribuidora Málaga S.L.',tipo:'Corporativo',pais:'España',kyc_status:'Verificado',capital_invertido:180000,tokens_poseidos:420,rendimiento_total:18500,roi_actual:10.3,auto_reinversion:false,nivel:'Socio',programa_activo:'Programa Internacional'},
+  {investor_id:'inv-004',codigo:'FIIA-INV-004',nombre:'Angel Investor Group CA',tipo:'Fondo',pais:'Guatemala',kyc_status:'Verificado',capital_invertido:250000,tokens_poseidos:580,rendimiento_total:22000,roi_actual:8.8,auto_reinversion:false,nivel:'Angel',programa_activo:'Fondo Expansión 2026'},
+  {investor_id:'inv-005',codigo:'FIIA-INV-005',nombre:'BID — Programa Agrotech',tipo:'ONG',pais:'EE.UU.',kyc_status:'Verificado',capital_invertido:500000,tokens_poseidos:0,rendimiento_total:35000,roi_actual:7.0,auto_reinversion:false,nivel:'Institucional',programa_activo:'BID Agrotech 2025'}
+];
+var SIM_PROGRAMS=[
+  {program_id:'prog-001',codigo:'FIIA-PROG-001',nombre:'Fondo de Expansión 2026',tipo:'FondoCapital',monto_objetivo:5000000,monto_captado:3850000,tasa_rendimiento:12.5,plazo_meses:24,min_inversion:25000,inversores_count:8,estado:'Activo',responsable:'Alejandría'},
+  {program_id:'prog-002',codigo:'FIIA-PROG-002',nombre:'Programa Socios Fundadores',tipo:'TokenSale',monto_objetivo:2000000,monto_captado:1800000,tasa_rendimiento:15.0,plazo_meses:36,min_inversion:10000,inversores_count:12,estado:'Activo',responsable:'Alejandría'},
+  {program_id:'prog-003',codigo:'FIIA-PROG-003',nombre:'AgriLending — Productores',tipo:'AgriLending',monto_objetivo:500000,monto_captado:45700,tasa_rendimiento:8.0,plazo_meses:12,min_inversion:500,inversores_count:18,estado:'Activo',responsable:'Buda IA'},
+  {program_id:'prog-004',codigo:'FIIA-PROG-004',nombre:'BID Agrotech 2025 — Incentivo',tipo:'Bono',monto_objetivo:1000000,monto_captado:500000,tasa_rendimiento:7.0,plazo_meses:18,min_inversion:50000,inversores_count:3,estado:'Activo',responsable:'Santiago COO'}
+];
+var SIM_WALLETS=[
+  {wallet_id:'wlt-escrow',tipo:'Escrow',nombre:'Cuenta Escrow Málaga',balance_usd:42000,balance_tokens:0,kyc_status:'Verificado',auto_reinversion:false},
+  {wallet_id:'wlt-operativa',tipo:'Operativa',nombre:'Cuenta Operativa iAGRI',balance_usd:28500,balance_tokens:0,kyc_status:'Verificado',auto_reinversion:false},
+  {wallet_id:'wlt-reserva',tipo:'Reserva',nombre:'Fondo Reserva Condominio',balance_usd:12000,balance_tokens:0,kyc_status:'Verificado',auto_reinversion:false},
+  {wallet_id:'wlt-socio-777',tipo:'Socio',nombre:'Wallet Socio Premium #777',balance_usd:8200,balance_tokens:125.5,kyc_status:'Verificado',auto_reinversion:true},
+  {wallet_id:'wlt-socio-001',tipo:'Socio',nombre:'Wallet Inversionista FIAA #001',balance_usd:4800,balance_tokens:80.0,kyc_status:'Verificado',auto_reinversion:false},
+  {wallet_id:'wlt-fertisal',tipo:'Proveedor',nombre:'Wallet Fertisalca',balance_usd:0,balance_tokens:0,kyc_status:'Pendiente',auto_reinversion:false}
+];
+var SIM_GOV=[
+  {vote_id:'gov-001',titulo:'Adquisición Drones Seguridad Perimetral',descripcion:'Compra de 4 drones CCTV autónomos $15K',tipo:'Gasto',monto_involucrado:15000,propuesto_por:'Akasha',votos_si:7,votos_no:1,tokens_si:4250,tokens_no:320,resultado:'Aprobado',estado:'Cerrado'},
+  {vote_id:'gov-002',titulo:'Expansión Nave INV-36 y INV-37',descripcion:'Construcción 2 naves 10,000m² para ciclo 2027',tipo:'Inversión',monto_involucrado:1200000,propuesto_por:'Santiago COO',votos_si:5,votos_no:2,tokens_si:8500,tokens_no:1200,resultado:'Aprobado',estado:'Activo'},
+  {vote_id:'gov-003',titulo:'Modificar Tasa Fee Tecnológico a 4.2%',descripcion:'Ajuste fee SaaS de 3.8% a 4.2%',tipo:'Cambio',monto_involucrado:0,propuesto_por:'Buda IA',votos_si:3,votos_no:4,tokens_si:2800,tokens_no:3900,resultado:'Pendiente',estado:'Activo'}
+];
+var SIM_TWIN=[
+  {up_id:'cu-01',codigo_up:'INV-01',nombre_up:'Nave 01',color_fenologico:'#16a34a',color_hidrico:'#22c55e',color_fitosanit:'#22c55e',valor_financiero:62500,temp_c:24.5,humedad_pct:78.2,alert_severity:0,fase_cultivo:'EnCosecha',avance_ciclo_pct:78},
+  {up_id:'cu-02',codigo_up:'INV-03',nombre_up:'Nave 03',color_fenologico:'#15803d',color_hidrico:'#22c55e',color_fitosanit:'#22c55e',valor_financiero:68000,temp_c:23.8,humedad_pct:80.1,alert_severity:0,fase_cultivo:'EnCosecha',avance_ciclo_pct:85},
+  {up_id:'cu-03',codigo_up:'INV-05',nombre_up:'Nave 05',color_fenologico:'#22c55e',color_hidrico:'#eab308',color_fitosanit:'#22c55e',valor_financiero:38000,temp_c:26.1,humedad_pct:74.5,alert_severity:1,fase_cultivo:'EnProceso',avance_ciclo_pct:55},
+  {up_id:'cu-04',codigo_up:'INV-14',nombre_up:'Nave 14',color_fenologico:'#166534',color_hidrico:'#22c55e',color_fitosanit:'#22c55e',valor_financiero:78500,temp_c:24.2,humedad_pct:79.8,alert_severity:0,fase_cultivo:'EnCosecha',avance_ciclo_pct:92},
+  {up_id:'cu-05',codigo_up:'CM-01',nombre_up:'CM-01',color_fenologico:'#22c55e',color_hidrico:'#22c55e',color_fitosanit:'#eab308',valor_financiero:28000,temp_c:23.0,humedad_pct:82.5,alert_severity:1,fase_cultivo:'EnProceso',avance_ciclo_pct:55},
+  {up_id:'cu-06',codigo_up:'CA-01',nombre_up:'CA-01',color_fenologico:'#86efac',color_hidrico:'#dc2626',color_fitosanit:'#22c55e',valor_financiero:12000,temp_c:28.5,humedad_pct:61.0,alert_severity:2,fase_cultivo:'Siembra',avance_ciclo_pct:25},
+  {up_id:'cu-07',codigo_up:'COMUN',nombre_up:'Áreas Comunes',color_fenologico:'#6b7280',color_hidrico:'#22c55e',color_fitosanit:'#22c55e',valor_financiero:0,temp_c:27.0,humedad_pct:65.0,alert_severity:0,fase_cultivo:'N/A',avance_ciclo_pct:0}
+];
+
+// ══ STATE ══
+var me=null, TOKENS=[], MARKET=[], LOANS=[], FARMERS=[], CROP_CONTRACTS=[], INVESTORS=[], PROGRAMS=[], WALLETS=[], GOV=[], TWIN=[];
+var TWIN_SELECTED=null;
+
+// ══ AUTH ══
+function doLogin(){
+  try{
+    var u=v('l-u').trim(),p=v('l-p').trim(),rol=v('l-rol');
+    var ok=(u==='admin@iagri.app'&&p==='iAGRI2026!')||(u==='admin@agrosense.co'&&p==='agro2026');
+    if(!ok){var err=document.getElementById('l-err');if(err)err.style.display='block';return;}
+    var names={director:'Alejandría — Directora FIIA',gestor:'Gestor de Inversiones',socio:'Socio Inversionista',buda:'Buda — Contralor',compliance:'Oficial AML/KYC'};
+    var icons={director:'🧠',gestor:'💼',socio:'🏆',buda:'📊',compliance:'🔍'};
+    me={email:u,rol:rol,nombre:names[rol]||'Usuario'};
+    var el=function(id){return document.getElementById(id);};
+    if(el('sb-av'))el('sb-av').textContent=icons[rol]||'💼';
+    if(el('sb-name'))el('sb-name').textContent=me.nombre.split(' ')[0];
+    if(el('sb-rol'))el('sb-rol').textContent=rol.toUpperCase();
+    if(el('topbar-badge'))el('topbar-badge').textContent='FIIA';
+    if(el('pg-login'))el('pg-login').style.display='none';
+    if(el('pg-app'))el('pg-app').style.display='block';
+    initApp();
+  }catch(e){console.error(e);
+    me={rol:'gestor',nombre:'Gestor'};
+    var l=document.getElementById('pg-login'),a=document.getElementById('pg-app');
+    if(l)l.style.display='none';if(a)a.style.display='block';
+    loadSimData();go('dash');
+  }
+}
+document.getElementById('btn-login').onclick=doLogin;
+document.addEventListener('keydown',function(e){var pg=document.getElementById('pg-login');if(e.key==='Enter'&&pg&&pg.style.display!=='none')doLogin();});
+function doLogout(){me=null;document.getElementById('pg-app').style.display='none';document.getElementById('pg-login').style.display='flex';}
+setInterval(function(){var e=document.getElementById('clock');if(e)e.textContent=new Date().toLocaleString('es-SV',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit'});},1000);
+
+// ══ NAV ══
+var SECS=['dash','programs','investors','tokens','market','lending','farmers','contracts','wallets','governance','twin','akasha'];
+var TITLES={dash:'Dashboard FIIA · Fondo de Inversión',programs:'Programas de Financiamiento',investors:'Inversores FIIA',tokens:'Token Assets',market:'Mercados & Commodities',lending:'AgriLending',farmers:'Productores Externos',contracts:'Contratos de Cultivo',wallets:'Billeteras FIIA',governance:'Gobernanza & Votación',twin:'Gemelo Digital',akasha:'Akasha — Fund AI'};
+var LOADERS={dash:loadDash,programs:loadPrograms,investors:loadInvestors,tokens:loadTokens,market:loadMarket,lending:loadLending,farmers:loadFarmers,contracts:loadContracts,wallets:loadWallets,governance:loadGovernance,twin:loadTwin,akasha:loadAkasha};
+function go(sec){
+  SECS.forEach(function(s){var e=document.getElementById('sec-'+s);if(e)e.style.display=s===sec?'block':'none';});
+  SECS.forEach(function(s){var n=document.getElementById('nav-'+s);if(n)n.classList.toggle('on',s===sec);});
+  var tt=document.getElementById('topbar-title');if(tt)tt.textContent=TITLES[sec]||sec;
+  if(LOADERS[sec])try{LOADERS[sec]();}catch(er){console.error('Loader',sec,er);}
+}
+function closeModal(){document.getElementById('modal-bg').style.display='none';}
+function openModal(title,html){document.getElementById('modal-title').textContent=title;document.getElementById('modal-content').innerHTML=html;document.getElementById('modal-bg').style.display='flex';}
+var _t;function toast(msg,c){var e=document.getElementById('toast');e.textContent=msg;e.style.borderColor=c?c+'80':'rgba(255,215,0,.2)';e.style.opacity='1';e.style.transform='translateX(-50%) translateY(0)';clearTimeout(_t);_t=setTimeout(function(){e.style.opacity='0';e.style.transform='translateX(-50%) translateY(30px)';},3200);}
+
+// ══ INIT ══
+function loadSimData(){TOKENS=SIM_TOKENS;MARKET=SIM_MARKET;LOANS=SIM_LOANS;FARMERS=SIM_FARMERS;CROP_CONTRACTS=SIM_CONTRACTS;INVESTORS=SIM_INVESTORS;PROGRAMS=SIM_PROGRAMS;WALLETS=SIM_WALLETS;GOV=SIM_GOV;TWIN=SIM_TWIN;}
+async function initApp(){
+  loadSimData();
+  go('dash');
+  renderMarketTicker();
+  if(db){
+    var tables=[['fiia_token_assets','TOKENS'],['fiia_market_sync','MARKET'],['fiia_loan_contracts','LOANS'],['crm_farmers','FARMERS'],['crm_crop_contracts','CROP_CONTRACTS'],['fiia_investors','INVESTORS'],['fiia_programs','PROGRAMS'],['fiia_wallets','WALLETS'],['fiia_governance','GOV'],['twin_realtime_state','TWIN']];
+    for(var i=0;i<tables.length;i++){
+      try{var r=await dbQ(function(d){return d.from(tables[i][0]).select('*').order('created_at',{ascending:false}).limit(50);});
+        if(r&&r.data&&r.data.length)eval(tables[i][1]+'=r.data');
+      }catch(e){}
+    }
+    try{loadDash();}catch(e){}
+    renderMarketTicker();
+  }
+  document.getElementById('nav-inv-lbl').textContent='Inversores ('+INVESTORS.length+')';
+  document.getElementById('nav-tok-lbl').textContent='Token Assets ('+TOKENS.length+')';
+  document.getElementById('nav-loan-lbl').textContent='AgriLending ('+LOANS.length+')';
+  document.getElementById('nav-farm-lbl').textContent='Productores ('+FARMERS.length+')';
+}
+
+// ══ MARKET TICKER ══
+function renderMarketTicker(){
+  var tickerEl=document.getElementById('market-ticker');if(!tickerEl)return;
+  var items=MARKET.map(function(m){
+    var c=m.variacion_pct>=0?'#00e676':'#ff1744';
+    return '<div class="ticker-item">'
+      +'<span style="color:#ffd700;font-weight:700;">'+m.commodity+'</span>'
+      +'<span style="color:#c8d5f0;">$'+m.precio_actual.toFixed(2)+'/'+m.unidad.split('/')[1]+'</span>'
+      +'<span style="color:'+c+';">'+(m.variacion_pct>=0?'▲':'▼')+Math.abs(m.variacion_pct).toFixed(2)+'%</span>'
+      +'</div>';
+  }).join('');
+  tickerEl.innerHTML=items+items; // duplicate for seamless loop
+  tickerEl.style.animation='ticker 25s linear infinite';
+}
+
+// ══ DASHBOARD ══
+function loadDash(){
+  var totalCapital=INVESTORS.reduce(function(a,i){return a+i.capital_invertido;},0);
+  var totalRendimiento=INVESTORS.reduce(function(a,i){return a+i.rendimiento_total;},0);
+  var avgROI=INVESTORS.reduce(function(a,i){return a+(i.roi_actual||0);},0)/Math.max(INVESTORS.length,1);
+  var tokensAUM=TOKENS.reduce(function(a,t){return a+t.valor_nominal;},0);
+  var loansAUM=LOANS.filter(function(l){return l.estado!=='Pagado';}).reduce(function(a,l){return a+l.saldo_pendiente;},0);
+  var moraCount=LOANS.filter(function(l){return l.estado==='Mora';}).length;
+  var KPIS=[
+    {icon:'💼',label:'AUM Total',val:'$'+fmtM(totalCapital),color:'#ffd700',sec:'investors'},
+    {icon:'📈',label:'Rendimientos',val:'$'+fmtM(totalRendimiento),color:'#00e676',sec:'investors'},
+    {icon:'%',label:'ROI Prom.',val:avgROI.toFixed(1)+'%',color:avgROI>=10?'#00e676':'#ff6d00',sec:'tokens'},
+    {icon:'💎',label:'AUM Tokens',val:'$'+fmtM(tokensAUM),color:'#7c4dff',sec:'tokens'},
+    {icon:'🏦',label:'Cartera Crédito',val:'$'+fmtM(loansAUM),color:'#2979ff',sec:'lending'},
+    {icon:'⚠️',label:'En Mora',val:moraCount+' préstamos',color:moraCount>0?'#ff1744':'#00e676',sec:'lending'}
+  ];
+  document.getElementById('dash-kpis').innerHTML=KPIS.map(function(k){
+    return '<div class="kpi" onclick="go(\''+k.sec+'\')" style="border-left:3px solid '+k.color+';">'
+      +'<div style="font-size:18px;">'+k.icon+'</div>'
+      +'<div style="font-size:9px;font-weight:700;color:var(--muted);margin:2px 0;text-transform:uppercase;">'+k.label+'</div>'
+      +'<div class="raj" style="font-size:17px;font-weight:700;color:'+k.color+';">'+k.val+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Portfolio
+  document.getElementById('dash-portfolio').innerHTML=TOKENS.map(function(t){
+    var pct=t.avance_ciclo_pct||0;var c=pct>=80?'#00e676':pct>=50?'#ffd700':'#ff6d00';
+    var circ=Math.round(t.tokens_circulacion/t.tokens_totales*100);
+    return '<div style="padding:8px 0;border-bottom:1px solid rgba(255,215,0,.06);cursor:pointer;" onclick="go(\'tokens\')">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">'
+      +'<div><div style="font-size:11px;font-weight:700;color:#e8f0fa;">'+t.cultivo+' — '+t.tipo_activo+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);">'+t.area_m2.toLocaleString()+'m² · Cosecha: '+(t.fecha_cosecha_est||'—')+'</div></div>'
+      +'<div style="text-align:right;"><div class="raj" style="font-size:14px;color:#ffd700;">$'+fmtM(t.valor_nominal)+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);">'+circ+'% en circulación</div></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<div class="prog" style="flex:1;height:6px;"><div class="prog-fill" style="width:'+pct+'%;background:linear-gradient(90deg,'+c+','+c+'80);"></div></div>'
+      +'<span style="font-size:10px;font-weight:700;color:'+c+';">'+pct+'%</span>'
+      +'<span class="badge" style="font-size:8px;color:#ffd700;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);">'+t.yield_real+'% yield</span>'
+      +'</div></div>';
+  }).join('');
+
+  // Market live
+  document.getElementById('dash-market-live').innerHTML=MARKET.slice(0,5).map(function(m){
+    var c=m.variacion_pct>=0?'#00e676':'#ff1744'; var arrow=m.variacion_pct>=0?'▲':'▼';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,215,0,.05);">'
+      +'<div><div style="font-size:11px;color:#e8f0fa;font-weight:600;">'+m.commodity+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);">'+m.mercado+'</div></div>'
+      +'<div style="text-align:right;"><div class="mono" style="font-size:12px;font-weight:700;color:#ffd700;">$'+m.precio_actual.toFixed(2)+'</div>'
+      +'<div style="font-size:10px;color:'+c+';">'+arrow+Math.abs(m.variacion_pct).toFixed(2)+'%</div></div>'
+      +'</div>';
+  }).join('');
+
+  // Top investors
+  document.getElementById('dash-investors-top').innerHTML=INVESTORS.sort(function(a,b){return b.capital_invertido-a.capital_invertido;}).slice(0,4).map(function(inv){
+    var nc=inv.roi_actual>=12?'b-ok':inv.roi_actual>=8?'b-gold':'b-warn';
+    return '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid rgba(255,215,0,.05);">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:rgba(255,215,0,.1);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid rgba(255,215,0,.2);">'+(inv.tipo==='Fondo'?'🏛️':inv.tipo==='Individual'?'👤':inv.tipo==='ONG'?'🌍':'🏢')+'</div>'
+      +'<div style="flex:1;"><div style="font-size:11px;font-weight:700;color:#e8f0fa;">'+inv.nombre.substring(0,28)+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);">'+inv.tipo+' · '+inv.nivel+'</div></div>'
+      +'<div style="text-align:right;"><div class="mono" style="font-size:11px;color:#ffd700;">$'+fmtM(inv.capital_invertido)+'</div>'
+      +'<span class="badge '+nc+'" style="font-size:8px;">'+inv.roi_actual+'% ROI</span></div>'
+      +'</div>';
+  }).join('');
+
+  // Lending widget
+  var activosLoans=LOANS.filter(function(l){return l.estado==='AlDia'||l.estado==='Activo';}).length;
+  var moraLoans=LOANS.filter(function(l){return l.estado==='Mora';});
+  document.getElementById('dash-lending-widget').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:10px;">'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:7px;text-align:center;"><div style="color:var(--muted);">Al Día</div><b style="color:#00e676;font-size:14px;">'+activosLoans+'</b></div>'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:7px;text-align:center;"><div style="color:var(--muted);">En Mora</div><b style="color:#ff1744;font-size:14px;">'+moraLoans.length+'</b></div>'
+    +'</div>'
+    +moraLoans.map(function(l){return '<div style="padding:5px 0;border-bottom:1px solid rgba(255,23,68,.1);"><div style="font-size:11px;color:#ff1744;">⚠️ '+l.borrower_nombre.substring(0,28)+'</div><div style="font-size:9px;color:var(--muted);">'+l.mora_dias+' días mora · $'+fmtM(l.saldo_pendiente)+' pendiente</div></div>';}).join('');
+
+  // Governance widget
+  var govActiva=GOV.filter(function(g){return g.estado==='Activo';});
+  document.getElementById('dash-gov-widget').innerHTML=govActiva.map(function(g){
+    var totalTokens=(g.tokens_si+g.tokens_no);var pctSi=totalTokens>0?Math.round(g.tokens_si/totalTokens*100):0;
+    var c=pctSi>=60?'#00e676':pctSi<=40?'#ff1744':'#ffd700';
+    return '<div style="padding:7px 0;border-bottom:1px solid rgba(255,215,0,.06);">'
+      +'<div style="font-size:11px;font-weight:700;color:#e8f0fa;margin-bottom:4px;">'+g.titulo.substring(0,35)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;">'
+      +'<div class="prog" style="flex:1;height:7px;"><div class="prog-fill" style="width:'+pctSi+'%;background:'+c+';"></div></div>'
+      +'<span style="font-size:10px;font-weight:700;color:'+c+';">'+pctSi+'% SÍ</span>'
+      +'<button class="btn btn-gold btn-sm" onclick="votar(\''+g.vote_id+'\',true)" style="padding:2px 7px;font-size:8px;">✓</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ══ PROGRAMS ══
+function loadPrograms(){
+  var TYPE_COLOR={FondoCapital:'#ffd700',TokenSale:'#7c4dff',AgriLending:'#00e676',Bono:'#2979ff'};
+  document.getElementById('programs-grid').innerHTML=PROGRAMS.map(function(p){
+    var c=TYPE_COLOR[p.tipo]||'#ffd700';
+    var pct=p.monto_objetivo>0?Math.round(p.monto_captado/p.monto_objetivo*100):0;
+    return '<div class="token-card fade-in">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+      +'<div><span class="mono" style="font-size:9px;color:'+c+';">'+p.codigo+'</span>'
+      +'<div class="raj" style="font-size:15px;font-weight:700;color:#e8f0fa;margin-top:2px;">'+p.nombre+'</div>'
+      +'<span class="badge" style="font-size:9px;color:'+c+';background:'+c+'12;border:1px solid '+c+'25;margin-top:4px;">'+p.tipo+'</span></div>'
+      +'<div style="text-align:right;">'
+      +'<div class="raj" style="font-size:22px;font-weight:700;color:'+c+';">'+p.tasa_rendimiento+'%</div>'
+      +'<div style="font-size:9px;color:var(--muted);">Rendimiento anual</div>'
+      +'</div></div>'
+      +'<div style="margin-bottom:10px;">'
+      +'<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;">'
+      +'<span style="color:var(--muted);">Captado: <b style="color:'+c+';">$'+fmtM(p.monto_captado)+'</b></span>'
+      +'<span style="color:var(--muted);">Objetivo: $'+fmtM(p.monto_objetivo)+'</span>'
+      +'</div>'
+      +'<div class="prog" style="height:8px;"><div class="prog-fill" style="width:'+pct+'%;background:linear-gradient(90deg,'+c+','+c+'80);"></div></div>'
+      +'<div style="font-size:9px;color:var(--muted);margin-top:2px;">'+pct+'% completado · '+p.inversores_count+' inversores · '+p.plazo_meses+' meses</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">'
+      +'<div style="font-size:10px;color:var(--muted);">Min. inversión: <b style="color:#e8f0fa;">$'+fmtM(p.min_inversion)+'</b> · Resp: <b style="color:#e8f0fa;">'+p.responsable+'</b></div>'
+      +'<button class="btn btn-gold btn-sm" onclick="toast(\'💼 Abriendo solicitud de inversión para '+p.nombre+'...\')">💼 Invertir</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ══ INVESTORS ══
+function loadInvestors(){
+  var NIVEL_C={Institucional:'#ffd700',Premium:'#00e676',Socio:'#2979ff',Angel:'#7c4dff',Semilla:'#4a6a8a'};
+  document.getElementById('investors-tbody').innerHTML=INVESTORS.map(function(inv){
+    var nc=NIVEL_C[inv.nivel]||'#4a6a8a';
+    var kc=inv.kyc_status==='Verificado'?'b-ok':'b-warn';
+    return '<tr>'
+      +'<td><span class="mono" style="font-size:10px;color:#ffd700;">'+inv.codigo+'</span></td>'
+      +'<td><div style="font-size:11px;font-weight:700;color:#e8f0fa;">'+inv.nombre+'</div>'
+      +'<div style="font-size:9px;color:var(--muted);">'+inv.pais+'</div></td>'
+      +'<td><span class="badge" style="font-size:8px;color:#2979ff;background:rgba(41,121,255,.1);border:1px solid rgba(41,121,255,.2);">'+inv.tipo+'</span></td>'
+      +'<td class="mono" style="color:#ffd700;font-weight:700;">$'+fmtM(inv.capital_invertido)+'</td>'
+      +'<td class="mono" style="color:#7c4dff;">'+(inv.tokens_poseidos||0)+'</td>'
+      +'<td><span class="raj" style="font-size:14px;font-weight:700;color:'+(inv.roi_actual>=10?'#00e676':inv.roi_actual>=8?'#ffd700':'#ff1744')+';">'+inv.roi_actual+'%</span></td>'
+      +'<td style="font-size:10px;color:var(--muted);">'+(inv.programa_activo||'—').substring(0,25)+'</td>'
+      +'<td>'+(inv.auto_reinversion?'<span class="badge b-ok" style="font-size:8px;">🔄 Auto</span>':'<span class="badge b-gray" style="font-size:8px;">Manual</span>')+'</td>'
+      +'<td><span class="badge" style="font-size:8px;color:'+nc+';background:'+nc+'12;border:1px solid '+nc+'25;">'+inv.nivel+'</span></td>'
+      +'</tr>';
+  }).join('');
+}
+
+// ══ TOKENS ══
+function loadTokens(){
+  var TIPO_COLOR={Invernadero:'#ffd700',CasaMalla:'#00e676',CampoAbierto:'#ff6d00'};
+  document.getElementById('tokens-grid').innerHTML=TOKENS.map(function(t){
+    var c=TIPO_COLOR[t.tipo_activo]||'#ffd700';
+    var pctCirc=Math.round(t.tokens_circulacion/t.tokens_totales*100);
+    var yieldDiff=t.yield_real-t.yield_estimado;
+    return '<div class="token-card fade-in">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
+      +'<span class="badge" style="font-size:8px;color:'+c+';background:'+c+'12;border:1px solid '+c+'25;">'+t.tipo_activo+'</span>'
+      +'<span class="badge '+(t.estado==='Activo'?'b-ok':'b-warn')+'" style="font-size:8px;">'+t.estado+'</span>'
+      +'</div>'
+      +'<div class="raj" style="font-size:14px;font-weight:700;color:#e8f0fa;margin-bottom:2px;">'+t.cultivo+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:10px;">'+t.area_m2.toLocaleString()+'m² · Cosecha est: '+(t.fecha_cosecha_est||'—')+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:10px;">'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Val. Nominal</div><b class="mono" style="color:#ffd700;">$'+fmtM(t.valor_nominal)+'</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Precio/Token</div><b class="mono" style="color:#e8f0fa;">$'+(t.precio_token_usd||0).toFixed(2)+'</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Yield Real</div><b style="color:'+(t.yield_real>=t.yield_estimado?'#00e676':'#ff6d00')+';">'+t.yield_real+'%</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Precio Export.</div><b style="color:#00e676;">$'+(t.precio_export_usd||0).toFixed(2)+'/kg</b></div>'
+      +'</div>'
+      +'<div style="margin-bottom:8px;">'
+      +'<div style="font-size:9px;color:var(--muted);margin-bottom:3px;">Ciclo: <b style="color:'+c+';">'+t.fase_cultivo+'</b> · Tokens: '+pctCirc+'% circulación</div>'
+      +'<div class="prog" style="height:6px;"><div class="prog-fill" style="width:'+t.avance_ciclo_pct+'%;background:'+c+';"></div></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px;">'
+      +'<span>'+t.avance_ciclo_pct+'% avance ciclo</span>'
+      +'<span style="color:'+(yieldDiff>=0?'#00e676':'#ff1744')+';">'+(yieldDiff>=0?'▲':'')+yieldDiff.toFixed(1)+'% vs estimado</span>'
+      +'</div></div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button class="btn btn-gold btn-sm" style="flex:1;" onclick="toast(\'💎 Abriendo compra de tokens '+t.cultivo+'...\')">💎 Comprar Tokens</button>'
+      +'<button class="btn btn-o btn-sm" onclick="toast(\'📊 Abriendo análisis de '+t.cultivo+'...\')">📊</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ══ MARKET ══
+function loadMarket(){
+  document.getElementById('market-cards').innerHTML=MARKET.map(function(m){
+    var c=m.variacion_pct>=0?'#00e676':'#ff1744'; var tc=m.tendencia==='Alcista'?'b-ok':m.tendencia==='Bajista'?'b-crit':'b-gold';
+    return '<div class="card '+(m.alerta_activa?'" style="border-color:#ff1744;':'" style="')+'">'
+      +(m.alerta_activa?'<div style="font-size:9px;font-weight:700;color:#ff1744;margin-bottom:4px;animation:pulse .8s infinite;">⚠️ ALERTA DE PRECIO ACTIVA</div>':'')
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.5px;margin-bottom:4px;">'+m.mercado+'</div>'
+      +'<div class="raj" style="font-size:16px;font-weight:700;color:#e8f0fa;margin-bottom:4px;">'+m.commodity+'</div>'
+      +'<div class="mono" style="font-size:28px;font-weight:700;color:#ffd700;margin-bottom:4px;">$'+m.precio_actual.toFixed(2)+'</div>'
+      +'<div style="font-size:10px;margin-bottom:8px;"><span style="color:var(--muted);">'+m.unidad+' · ayer: $'+m.precio_ayer.toFixed(2)+'</span></div>'
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap;">'
+      +'<span style="font-size:12px;font-weight:700;color:'+c+';">'+(m.variacion_pct>=0?'▲':'▼')+Math.abs(m.variacion_pct).toFixed(2)+'%</span>'
+      +'<span class="badge '+tc+'" style="font-size:8px;">'+m.tendencia+'</span>'
+      +'<span class="badge b-gray" style="font-size:8px;">Vol: '+m.volatilidad+'</span>'
+      +'</div></div>';
+  }).join('');
+}
+
+function simularMercado(){
+  var comm=v('sim-comm'), varPct=parseFloat(v('sim-var'))||0, vol=parseFloat(v('sim-vol'))||42000;
+  var mkt=MARKET.find(function(m){return m.commodity===comm&&m.mercado==='MercaMalaga';})||MARKET[0];
+  if(!mkt)return;
+  var precioNuevo=mkt.precio_actual*(1+varPct/100);
+  var ingresoBase=vol*mkt.precio_actual;
+  var ingresoNuevo=vol*precioNuevo;
+  var diferencia=ingresoNuevo-ingresoBase;
+  var c=diferencia>=0?'#00e676':'#ff1744';
+  document.getElementById('sim-result').innerHTML='<div style="background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.15);border-radius:10px;padding:14px;">'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Resultado de Simulación: '+comm+' '+(varPct>=0?'+':'')+varPct+'%</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:11px;">'
+    +'<div><div style="color:var(--muted);">Precio Actual</div><b class="mono" style="color:#ffd700;">$'+mkt.precio_actual.toFixed(2)+'</b></div>'
+    +'<div><div style="color:var(--muted);">Precio Simulado</div><b class="mono" style="color:'+c+';">$'+precioNuevo.toFixed(2)+'</b></div>'
+    +'<div><div style="color:var(--muted);">Ingreso Base</div><b class="mono" style="color:#e8f0fa;">$'+fmtM(ingresoBase)+'</b></div>'
+    +'<div><div style="color:var(--muted);">Impacto</div><b class="mono" style="color:'+c+';">'+(diferencia>=0?'+':'')+fmtM(diferencia)+'</b></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;font-size:11px;color:var(--muted);">'
+    +(diferencia<0?'⚠️ Akasha recomienda: Evaluar redirección a producto deshidratado en Agroindustria para preservar valor del activo. Activar cláusula de ajuste en contrato Málaga.':'✅ Mercado favorable. Mantener estrategia de exportación FOB. Considerar adelantar cosecha de lotes en 92% de avance.')
+    +'</div></div>';
+}
+
+// ══ LENDING ══
+function loadLending(){
+  var activos=LOANS.filter(function(l){return l.estado!=='Pagado';});
+  var totalSaldo=activos.reduce(function(a,l){return a+l.saldo_pendiente;},0);
+  var totalMora=LOANS.filter(function(l){return l.estado==='Mora';}).reduce(function(a,l){return a+l.saldo_pendiente;},0);
+  var totalPagado=LOANS.filter(function(l){return l.estado==='Pagado';}).reduce(function(a,l){return a+l.monto_principal;},0);
+  document.getElementById('lending-kpis').innerHTML=[
+    {l:'Cartera Activa',v:'$'+fmtM(totalSaldo),c:'#2979ff'},
+    {l:'En Mora',v:'$'+fmtM(totalMora),c:'#ff1744'},
+    {l:'Recuperado',v:'$'+fmtM(totalPagado),c:'#00e676'},
+    {l:'Productores',v:FARMERS.length+' registrados',c:'#ffd700'}
+  ].map(function(k){return '<div class="card" style="text-align:center;"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;">'+k.l+'</div><div class="mono" style="font-size:15px;font-weight:700;color:'+k.c+';">'+k.v+'</div></div>';}).join('');
+  document.getElementById('lending-tbody').innerHTML=LOANS.map(function(l){
+    var sc=l.estado==='AlDia'?'b-ok':l.estado==='Mora'?'b-crit':l.estado==='Pagado'?'b-gray':'b-blue';
+    var tc=l.tipo_prestamo==='Productor'?'b-gold':l.tipo_prestamo==='Insumos'?'b-ok':'b-blue';
+    return '<tr>'
+      +'<td><span class="mono" style="font-size:10px;color:#ffd700;">'+l.codigo+'</span></td>'
+      +'<td style="font-size:11px;color:#e8f0fa;">'+l.borrower_nombre+'</td>'
+      +'<td><span class="badge '+tc+'" style="font-size:8px;">'+l.tipo_prestamo+'</span></td>'
+      +'<td class="mono" style="color:#e8f0fa;">$'+fmtM(l.monto_principal)+'</td>'
+      +'<td style="color:#ffd700;font-weight:700;">'+l.tasa_interes+'%</td>'
+      +'<td class="mono" style="color:'+(l.saldo_pendiente>0?'#2979ff':'#00e676')+';">$'+fmtM(l.saldo_pendiente)+'</td>'
+      +'<td class="mono">$'+fmtM(l.cuota_mensual)+'</td>'
+      +'<td><span class="badge '+sc+'" style="font-size:8px;">'+l.estado+'</span></td>'
+      +'<td style="color:'+(l.mora_dias>0?'#ff1744':'#00e676');'font-weight:700;">'+( l.mora_dias>0?l.mora_dias+'d':'—')+'</td>'
+      +'<td>'+(l.estado==='Mora'?'<button class="btn btn-r btn-sm" style="font-size:9px;" onclick="notificarMora(\''+l.loan_id+'\')">📲 Notificar</button>':'')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function notificarMora(id){var l=LOANS.find(function(x){return x.loan_id===id;});if(l)toast('📲 Akasha notificó a '+l.borrower_nombre+' por '+l.mora_dias+' días de mora — WhatsApp enviado','#ff1744');}
+
+// ══ FARMERS ══
+function loadFarmers(){
+  document.getElementById('nav-farm-lbl').textContent='Productores ('+FARMERS.length+')';
+  document.getElementById('farmers-grid').innerHTML=FARMERS.map(function(f){
+    var kc=f.kyc_status==='Verificado'?'#00e676':f.kyc_status==='Pendiente'?'#ff6d00':'#ff1744';
+    var sc=f.credit_score>=700?'#00e676':f.credit_score>=600?'#ffd700':'#ff1744';
+    return '<div class="card fade-in">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
+      +'<span class="mono" style="font-size:10px;color:#ffd700;">'+f.codigo+'</span>'
+      +'<span class="badge" style="font-size:8px;color:'+kc+';background:'+kc+'12;border:1px solid '+kc+'25;">'+f.kyc_status+'</span>'
+      +'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#e8f0fa;margin-bottom:2px;">'+f.nombre+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">'+f.departamento+' · '+f.area_finca_ha+' Ha</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;">'
+      +((f.cultivos_arr||[]).map(function(c){return '<span style="font-size:8px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);border-radius:8px;padding:2px 6px;color:var(--muted);">'+c+'</span>';}).join(''))
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;margin-bottom:8px;">'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:5px;"><div style="color:var(--muted);">Credit Score</div><b style="color:'+sc+';">'+( f.credit_score||'—')+'</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:5px;"><div style="color:var(--muted);">Cosechas</div><b style="color:#e8f0fa;">'+( f.total_cosechas||0)+'</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:5px;"><div style="color:var(--muted);">Kg Entregados</div><b style="color:#00e676;">'+fmtM(f.kg_entregados||0)+'kg</b></div>'
+      +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:5px;"><div style="color:var(--muted);">Calidad Prom.</div><b style="color:#ffd700;">'+(f.calidad_promedio||'—')+'/10</b></div>'
+      +'</div>'
+      +(f.saldo_prestamos>0?'<div style="font-size:10px;color:#ff1744;margin-bottom:6px;">Préstamo activo: <b>$'+fmtM(f.saldo_prestamos)+'</b></div>':'')
+      +'<div style="display:flex;gap:5px;">'
+      +(f.kyc_status==='Verificado'&&f.saldo_prestamos===0?'<button class="btn btn-g btn-sm" onclick="toast(\'🏦 Solicitando crédito FIIA para '+f.nombre+'...\')">🏦 Crédito</button>':'')
+      +'<button class="btn btn-o btn-sm" onclick="toast(\'🤖 Akasha analizando finca de '+f.nombre+'...\')">🤖 Asistencia IA</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ══ CONTRACTS ══
+function loadContracts(){
+  var farmerMap={};FARMERS.forEach(function(f){farmerMap[f.farmer_id]=f.nombre;});
+  document.getElementById('contracts-tbody').innerHTML=CROP_CONTRACTS.map(function(c){
+    var sc=c.estado==='Activo'?'b-blue':c.estado==='Completado'?'b-ok':'b-gray';
+    return '<tr>'
+      +'<td><span class="mono" style="font-size:10px;color:#ffd700;">'+c.codigo+'</span></td>'
+      +'<td style="font-size:11px;color:#e8f0fa;">'+(farmerMap[c.farmer_id]||c.farmer_id||'—')+'</td>'
+      +'<td style="color:#00e676;font-weight:600;">'+c.cultivo+'</td>'
+      +'<td class="mono"><span style="color:#e8f0fa;">'+fmtM(c.kg_comprometidos)+'</span> kg</td>'
+      +'<td class="mono" style="color:#ffd700;">$'+c.precio_acordado.toFixed(2)+'/kg</td>'
+      +'<td style="font-size:10px;color:var(--muted);">'+(c.fecha_entrega||'—')+'</td>'
+      +'<td><div class="prog" style="width:80px;"><div class="prog-fill" style="width:'+c.avance_pct+'%;background:#00e676;"></div></div>'
+      +'<span style="font-size:9px;color:var(--muted);">'+c.avance_pct+'%</span></td>'
+      +'<td><span class="badge '+sc+'" style="font-size:8px;">'+c.estado+'</span></td>'
+      +'<td class="mono" style="color:#00e676;font-weight:700;">$'+fmtM(c.monto_liquidado)+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+// ══ WALLETS ══
+function loadWallets(){
+  var WTYPE={Escrow:'#00bcd4',Operativa:'#00e676',Reserva:'#2979ff',Socio:'#7c4dff',Proveedor:'#4a6a8a'};
+  var html='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">'
+    +WALLETS.map(function(w){
+      var c=WTYPE[w.tipo]||'#ffd700';
+      return '<div class="token-card">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:8px;">'
+        +'<span class="badge" style="font-size:8px;color:'+c+';background:'+c+'12;border:1px solid '+c+'25;">'+w.tipo+'</span>'
+        +(w.kyc_status==='Verificado'?'<span class="badge b-ok" style="font-size:8px;">✅ KYC</span>':'<span class="badge b-warn" style="font-size:8px;">⏳ KYC</span>')
+        +'</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#e8f0fa;margin-bottom:4px;">'+w.nombre+'</div>'
+        +'<div class="mono" style="font-size:24px;font-weight:700;color:'+c+';">$'+fmtM(w.balance_usd)+'</div>'
+        +(w.balance_tokens>0?'<div style="font-size:11px;color:#7c4dff;margin-top:2px;">'+w.balance_tokens.toFixed(1)+' tokens</div>':'')
+        +(w.auto_reinversion?'<div class="badge b-ok" style="font-size:8px;margin-top:6px;">🔄 Auto-reinversión activa</div>':'')
+        +'</div>';
+    }).join('')+'</div>';
+
+  // DSO/DPO widget
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">'
+    +'<div class="card" style="text-align:center;border:1px solid rgba(255,215,0,.15);">'
+    +'<div class="raj" style="font-size:28px;font-weight:700;color:#ffd700;">18</div>'
+    +'<div style="font-size:10px;color:var(--muted);">DSO (Días Cobro de Málaga)</div>'
+    +'</div>'
+    +'<div class="card" style="text-align:center;border:1px solid rgba(41,121,255,.15);">'
+    +'<div class="raj" style="font-size:28px;font-weight:700;color:#2979ff;">30</div>'
+    +'<div style="font-size:10px;color:var(--muted);">DPO (Días Pago Proveedores)</div>'
+    +'</div>'
+    +'<div class="card" style="text-align:center;border:1px solid rgba(0,230,118,.15);">'
+    +'<div class="raj" style="font-size:28px;font-weight:700;color:#00e676;">+12</div>'
+    +'<div style="font-size:10px;color:var(--muted);">Días Float (DPO-DSO) ✅</div>'
+    +'</div></div>';
+  document.getElementById('wallets-content').innerHTML=html;
+}
+
+// ══ GOVERNANCE ══
+function loadGovernance(){
+  document.getElementById('governance-list').innerHTML=GOV.map(function(g){
+    var c=g.resultado==='Aprobado'?'#00e676':g.resultado==='Rechazado'?'#ff1744':g.resultado==='Pendiente'?'#ffd700':'#2979ff';
+    var totalTokens=g.tokens_si+g.tokens_no;
+    var pctSi=totalTokens>0?Math.round(g.tokens_si/totalTokens*100):0;
+    var pctNo=100-pctSi;
+    return '<div class="card fade-in" style="margin-bottom:11px;border-left:3px solid '+c+';">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
+      +'<div><span class="badge b-gold" style="font-size:8px;margin-bottom:4px;">'+g.tipo+'</span>'
+      +'<div class="raj" style="font-size:15px;font-weight:700;color:#e8f0fa;">'+g.titulo+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+g.descripcion+'</div>'
+      +(g.monto_involucrado>0?'<div style="font-size:11px;color:#ffd700;margin-top:2px;">💰 Monto involucrado: <b>$'+fmtM(g.monto_involucrado)+'</b></div>':'')
+      +'</div>'
+      +'<span class="badge" style="font-size:9px;color:'+c+';background:'+c+'12;border:1px solid '+c+'25;">'+g.resultado+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+      +'<div><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span style="color:#00e676;">✓ SÍ: '+g.votos_si+' votos ('+g.tokens_si+' tokens)</span><b style="color:#00e676;">'+pctSi+'%</b></div>'
+      +'<div class="prog" style="height:8px;"><div class="prog-fill" style="width:'+pctSi+'%;background:#00e676;"></div></div></div>'
+      +'<div><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span style="color:#ff1744;">✗ NO: '+g.votos_no+' votos ('+g.tokens_no+' tokens)</span><b style="color:#ff1744;">'+pctNo+'%</b></div>'
+      +'<div class="prog" style="height:8px;"><div class="prog-fill" style="width:'+pctNo+'%;background:#ff1744;"></div></div></div>'
+      +'</div>'
+      +(g.estado==='Activo'?'<div style="display:flex;gap:8px;">'
+        +'<button class="btn btn-g btn-sm" onclick="votar(\''+g.vote_id+'\',true)">✓ Votar SÍ</button>'
+        +'<button class="btn btn-r btn-sm" onclick="votar(\''+g.vote_id+'\',false)">✗ Votar NO</button>'
+        +'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+async function votar(id, votoSi){
+  var g=GOV.find(function(x){return x.vote_id===id;});if(!g)return;
+  if(votoSi){g.votos_si++;g.tokens_si+=125;}else{g.votos_no++;g.tokens_no+=125;}
+  var total=g.tokens_si+g.tokens_no;
+  if(g.tokens_si/total>0.6)g.resultado='Aprobado';
+  else if(g.tokens_no/total>0.6)g.resultado='Rechazado';
+  await dbQ(function(d){return d.from('fiia_governance').update({votos_si:g.votos_si,votos_no:g.votos_no,tokens_si:g.tokens_si,tokens_no:g.tokens_no,resultado:g.resultado}).eq('vote_id',id);});
+  toast((votoSi?'✅ Votaste SÍ':'❌ Votaste NO')+' — '+g.titulo.substring(0,35));
+  loadGovernance();
+}
+
+// ══ DIGITAL TWIN ══
+function loadTwin(){
+  var totalValor=TWIN.reduce(function(a,t){return a+t.valor_financiero;},0);
+  var alertas=TWIN.filter(function(t){return t.alert_severity>0;}).length;
+  // Map
+  var mapHtml='<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:12px;letter-spacing:.5px;">🗺️ Mapa de Calor — 78 Ha Hidroexpo</div>'
+    +'<div style="margin-bottom:8px;font-size:9px;color:var(--muted);">Valor financiero total: <b style="color:#ffd700;">$'+fmtM(totalValor)+'</b> · Alertas activas: <b style="color:'+(alertas>0?'#ff1744':'#00e676')+';">'+alertas+'</b></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">'
+    +TWIN.map(function(n){
+      var ac=n.alert_severity>=2?'#ff1744':n.alert_severity===1?'#ffd700':'#22c55e';
+      var bg=n.color_fenologico+'20';
+      return '<div class="nave-cell" style="background:'+bg+';border:1.5px solid '+n.color_fenologico+'50;min-height:80px;" onclick="selectNave(\''+n.up_id+'\')">'
+        +'<div style="font-size:11px;font-weight:700;color:'+n.color_fenologico+';">'+n.codigo_up+'</div>'
+        +(n.alert_severity>0?'<div style="width:7px;height:7px;border-radius:50%;background:'+ac+';animation:pulse .8s infinite;"></div>':'')
+        +'<div style="font-size:8px;color:rgba(255,255,255,.5);">'+n.fase_cultivo+'</div>'
+        +(n.valor_financiero>0?'<div style="font-size:8px;color:#ffd700;font-family:monospace;">$'+fmtM(n.valor_financiero)+'</div>':'')
+        +'<div class="prog" style="width:100%;height:3px;margin-top:3px;"><div class="prog-fill" style="width:'+n.avance_ciclo_pct+'%;background:'+n.color_fenologico+';"></div></div>'
+        +'</div>';
+    }).join('')+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;font-size:9px;">'
+    +'<span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:#16a34a;"></div>EnCosecha</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:#22c55e;"></div>EnProceso</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:#86efac;"></div>Siembra</span>'
+    +'<span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:#ffd700;"></div>⚠️Alerta</span>'
+    +'</div>';
+  document.getElementById('twin-map-card').innerHTML=mapHtml;
+
+  // Side detail
+  var n=TWIN_SELECTED||TWIN[2]; // default to nave with alert
+  renderTwinDetail(n);
+}
+
+function selectNave(upId){TWIN_SELECTED=TWIN.find(function(t){return t.up_id===upId;})||null;if(TWIN_SELECTED)renderTwinDetail(TWIN_SELECTED);}
+
+function renderTwinDetail(n){
+  var d=document.getElementById('twin-detail');if(!d)return;
+  var ac=n.alert_severity>=2?'#ff1744':n.alert_severity===1?'#ffd700':'#22c55e';
+  var layers=['Fenológica','Hídrica','Fitosanitaria'];
+  var layerColors=[n.color_fenologico,n.color_hidrico,n.color_fitosanit];
+  var tok=SIM_TOKENS.find(function(t){return t.up_id===n.up_id;})||null;
+  d.innerHTML='<div class="card" style="border:1px solid '+ac+'40;">'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">'+n.codigo_up+' — '+n.nombre_up+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:10px;">'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Temp.</div><b style="color:'+(n.temp_c>30?'#ff1744':'#e8f0fa')+';">'+(n.temp_c||'—')+'°C</b></div>'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Humedad</div><b style="color:'+(n.humedad_pct<65?'#ff1744':'#00e676')+';">'+(n.humedad_pct||'—')+'%</b></div>'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">EC Level</div><b style="color:#2979ff;">'+(n.ec_level||'—')+' mS</b></div>'
+    +'<div style="background:rgba(255,255,255,.03);border-radius:5px;padding:6px;"><div style="color:var(--muted);">Avance</div><b style="color:#ffd700;">'+n.avance_ciclo_pct+'%</b></div>'
+    +'</div>'
+    +'<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">Capas de Análisis</div>'
+    +layers.map(function(l,i){var lc=layerColors[i];return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;margin-bottom:4px;"><span>'+l+'</span><div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;border-radius:3px;background:'+lc+';"></div><span style="color:'+lc+';">'+(lc==='#22c55e'||lc==='#15803d'||lc==='#16a34a'?'OK':'⚠️ Alerta')+'</span></div></div>';}).join('')
+    +(n.valor_financiero>0?'<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,215,0,.1);"><div style="font-size:10px;color:var(--muted);">Valor Financiero Estimado</div><div class="mono" style="font-size:18px;font-weight:700;color:#ffd700;">$'+fmtM(n.valor_financiero)+'</div></div>':'')
+    +'</div>'
+    +(tok?'<div class="card" style="border:1px solid rgba(255,215,0,.15);">'
+    +'<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Token Asset</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#e8f0fa;">'+tok.cultivo+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:10px;">'
+    +'<div><div style="color:var(--muted);">Yield Real</div><b style="color:#00e676;">'+tok.yield_real+'%</b></div>'
+    +'<div><div style="color:var(--muted);">Precio Export.</div><b style="color:#ffd700;">$'+tok.precio_export_usd.toFixed(2)+'/kg</b></div>'
+    +'</div>'
+    +'<button class="btn btn-gold btn-sm" style="width:100%;margin-top:8px;" onclick="go(\'tokens\')">💎 Ver Tokens</button>'
+    +'</div>':'');
+}
+
+// ══ AKASHA AI ══
+function loadAkasha(){
+  var totalAUM=INVESTORS.reduce(function(a,i){return a+i.capital_invertido;},0);
+  var avgROI=INVESTORS.reduce(function(a,i){return a+(i.roi_actual||0);},0)/Math.max(INVESTORS.length,1);
+  document.getElementById('akasha-fund-state').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">'
+    +'<div><span style="color:var(--muted);">AUM Total:</span><br><b class="mono" style="color:#ffd700;">$'+fmtM(totalAUM)+'</b></div>'
+    +'<div><span style="color:var(--muted);">ROI Promedio:</span><br><b class="mono" style="color:#00e676;">'+avgROI.toFixed(1)+'%</b></div>'
+    +'<div><span style="color:var(--muted);">Token Assets:</span><br><b class="mono" style="color:#7c4dff;">$'+fmtM(TOKENS.reduce(function(a,t){return a+t.valor_nominal;},0))+'</b></div>'
+    +'<div><span style="color:var(--muted);">Cartera Crédito:</span><br><b class="mono" style="color:#2979ff;">$'+fmtM(LOANS.filter(function(l){return l.estado!=='Pagado';}).reduce(function(a,l){return a+l.saldo_pendiente;},0))+'</b></div>'
+    +'</div>';
+  document.getElementById('akasha-market').innerHTML='<div style="display:flex;flex-direction:column;gap:5px;">'
+    +MARKET.slice(0,4).map(function(m){
+      var c=m.variacion_pct>=0?'#00e676':'#ff1744';
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,215,0,.05);font-size:11px;">'
+        +'<span>'+m.commodity+'</span><span class="mono" style="color:#ffd700;">$'+m.precio_actual.toFixed(2)+' <span style="color:'+c+';">'+(m.variacion_pct>=0?'▲':'▼')+Math.abs(m.variacion_pct).toFixed(1)+'%</span></span></div>';
+    }).join('')+'</div>';
+  var msgs=document.getElementById('chat-messages');
+  if(msgs&&msgs.children.length===0){
+    addChatMsg('¡Bienvenido a **FIIA — Fondo de Inversión Agricultura Alimentos América**!\n\nSoy Akasha, el gestor AI del fondo. Actualmente administro:\n• **AUM**: $'+fmtM(totalAUM)+' en '+INVESTORS.length+' inversores\n• **'+TOKENS.length+' Token Assets** activos en producción\n• **ROI promedio**: '+avgROI.toFixed(1)+'% anual\n• '+FARMERS.length+' productores externos en Contract Farming\n\n¿En qué aspectos del fondo quieres trabajar hoy?','ai');
+  }
+  var _qt=[{l:'💎 Tokens',q:'Analiza el rendimiento de los token assets activos'},{l:'📈 Mercados',q:'Actualización de precios en MercaMálaga y estado de alertas'},{l:'🏦 Crédito',q:'Estado de la cartera de AgriLending y mora actual'},{l:'🏆 Inversores',q:'Performance de los inversores y distribución del fondo'},{l:'🗳️ Gobernanza',q:'Propuestas activas de gobernanza que requieren decisión'},{l:'⚡ What-If',q:'Simula qué pasa si el precio del tomate baja 15% en Málaga'}];
+  document.getElementById('chat-quick').innerHTML=_qt.map(function(t){return '<button class="btn btn-o btn-sm" onclick="quickChat(\''+t.q+'\')">'+t.l+'</button>';}).join('');
+}
+
+function quickChat(q){var inp=document.getElementById('chat-input');if(inp){inp.value=q;sendChat();}}
+
+async function sendChat(){
+  var input=document.getElementById('chat-input');var msg=input.value.trim();if(!msg)return;
+  input.value='';addChatMsg(msg,'user');
+  var btn=document.getElementById('chat-btn');if(btn){btn.disabled=true;btn.textContent='...';}
+  var totalAUM=INVESTORS.reduce(function(a,i){return a+i.capital_invertido;},0);
+  var avgROI=INVESTORS.reduce(function(a,i){return a+(i.roi_actual||0);},0)/Math.max(INVESTORS.length,1);
+  var sys='Eres Akasha, el gestor AI de FIIA (Fondo de Inversión para la Agricultura, Alimentos de América). Eres experto en inversiones agrícolas, tokenización de activos biológicos, mercados de commodities, financiamiento (AgriLending) y contract farming. Estado del fondo: AUM $'+fmtM(totalAUM)+', ROI '+avgROI.toFixed(1)+'%, '+TOKENS.length+' token assets, '+FARMERS.length+' productores externos. Tomate Cherry MercaMálaga: $2.15/kg (+3.37%). Responde en español, sé experto en finanzas e inversiones agropecuarias.';
+  try{
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:sys,messages:[{role:'user',content:msg}]})});
+    var d=await r.json();addChatMsg(d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'Sin respuesta','ai');
+  }catch(e){
+    var FALL={token:'💎 **Análisis Token Assets — FIIA**\n\n**Mejor rendimiento**: INV-14 (Mix Premium) con **45.8% yield real** vs 48% estimado (-2.2%)\n**Próximo a cosechar**: INV-14 el 20/05 (92% ciclo) → $78,500 en valor financiero a liberar\n\n**Recomendación Akasha**: Abrir nueva ventana de TokenSale para INV-36/37 (aprobado en gobernanza) y captar $1.2M adicionales antes del cierre del ciclo Q2.',mercado:'📈 **Mercados — Análisis FIIA**\n\n**Alcistas**: Tomate Cherry (+3.37%) y San Marzano (+1.35%) en MercaMálaga\n**Bajista**: Pepino (-2.63%) → Considerar reducir contrato con Farm-001\n\n**Alerta CME**: Tomate Cherry en bolsa NY bajó -1.49%. Divergencia con Málaga sugiere presión bajista en 15-30 días.\n\n**Akasha recomienda**: Fijar precio forward con Distribuidora Málaga S.L. en los próximos 5 días mientras el precio local siga alto.',mora:'🏦 **Cartera AgriLending**\n\n**En Mora**: FIIA-LOAN-003 (José Flores) → 18 días de atraso, $3,500 pendiente\n**Acción recomendada**: Activar protocolo de renegociación. Propuesta: extender plazo 60 días con garantía adicional de su próxima cosecha (CC-2026-001 con 45% avance).\n\n**Morosidad del portafolio**: 12.5% (1 de 3 activos). Meta: <8%',default:'📊 **Análisis Integral FIIA**\n\nEl fondo mantiene indicadores sólidos:\n\n• ROI promedio **'+avgROI.toFixed(1)+'%** vs benchmark sector 8.2%\n• Token assets con ciclos de cosecha bien distribuidos Q2-Q3\n• '+PROGRAMS.filter(function(p){return p.estado==='Activo';}).length+' programas activos captando capital\n\n**Top oportunidad**: Programa Socios Fundadores al 90% captado ($1.8M/$2M) — ventana de cierre en 45 días. Akasha sugiere priorizar cierres de inversores pendientes.'};
+    var k=Object.keys(FALL).find(function(k){return msg.toLowerCase().includes(k);});
+    addChatMsg(FALL[k||'default'],'ai');
+  }
+  if(btn){btn.disabled=false;btn.textContent='→';}
+}
+
+function addChatMsg(text,type){
+  var msgs=document.getElementById('chat-messages');
+  var div=document.createElement('div');
+  div.style.cssText='padding:9px 13px;border-radius:11px;font-size:12px;line-height:1.65;max-width:86%;'+(type==='user'?'background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.18);color:#c8d5f0;margin-left:auto;':'background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.12);color:#c8d5f0;');
+  if(type==='ai')div.innerHTML='<div style="font-size:9px;color:var(--muted);margin-bottom:3px;">🧠 Akasha — Fund AI Manager</div>'+text.replace(/\*\*(.*?)\*\*/g,'<b style="color:#ffd700;">$1</b>').replace(/\n/g,'<br>');
+  else div.textContent=text;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ══ MODALS ══
+function showModalProgram(){openModal('🚀 Nuevo Programa de Financiamiento','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><label>Nombre *</label><input id="p-nom" placeholder="Nombre del programa"></div><div><label>Tipo</label><select id="p-tipo"><option>FondoCapital</option><option>TokenSale</option><option>AgriLending</option><option>Bono</option></select></div><div><label>Monto Objetivo $</label><input id="p-obj" type="number" placeholder="0"></div><div><label>Tasa Rendimiento %</label><input id="p-tasa" type="number" placeholder="12.5" step="0.1"></div><div><label>Plazo (meses)</label><input id="p-plazo" type="number" placeholder="24"></div><div><label>Mín. Inversión $</label><input id="p-min" type="number" placeholder="25000"></div><div><label>Responsable</label><input id="p-resp" placeholder="Alejandría"></div><div><label>Fecha Cierre</label><input id="p-fecha" type="date"></div></div><div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-gold" onclick="saveProgram()">💾 Lanzar Programa</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>');}
+function showModalInvestor(){openModal('🏆 Registrar Inversor','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><label>Nombre *</label><input id="i-nom" placeholder="Nombre"></div><div><label>Tipo</label><select id="i-tipo"><option>Individual</option><option>Corporativo</option><option>Fondo</option><option>Banco</option><option>ONG</option></select></div><div><label>País</label><input id="i-pais" value="El Salvador"></div><div><label>Capital Inicial $</label><input id="i-cap" type="number" placeholder="0"></div><div><label>Programa</label><select id="i-prog" style="font-size:11px;padding:6px;">'+PROGRAMS.map(function(p){return '<option>'+p.nombre+'</option>';}).join('')+'</select></div><div><label>Nivel</label><select id="i-nivel"><option>Semilla</option><option>Angel</option><option>Socio</option><option>Premium</option><option>Institucional</option></select></div></div><div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-gold" onclick="saveInvestor()">💾 Registrar</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>');}
+function showModalLoan(){openModal('🏦 Nuevo Crédito AgriLending','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><label>Prestatario *</label><input id="ln-nom" placeholder="Nombre del prestatario"></div><div><label>Tipo Préstamo</label><select id="ln-tipo"><option>Insumos</option><option>CapitalTrabajo</option><option>Infraestructura</option><option>Productor</option></select></div><div><label>Monto Principal $</label><input id="ln-monto" type="number" placeholder="0"></div><div><label>Tasa Interés %</label><input id="ln-tasa" type="number" value="4.5" step="0.1"></div><div><label>Plazo (meses)</label><input id="ln-plazo" type="number" placeholder="6"></div><div><label>Garantía/Colateral</label><input id="ln-gar" placeholder="Cosecha futura, tokens..."></div></div><div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-g" onclick="saveLoan()">⚡ Aprobar Crédito</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>');}
+function showModalFarmer(){openModal('🌱 Registrar Productor Externo','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><label>Nombre *</label><input id="f-nom" placeholder="Nombre completo"></div><div><label>DUI / Identificación</label><input id="f-dui" placeholder="0000-000000-000-0"></div><div><label>Teléfono</label><input id="f-tel" placeholder="+503 XXXX XXXX"></div><div><label>Departamento</label><input id="f-dep" placeholder="La Paz, Cuscatlán..."></div><div><label>Área Finca (Ha)</label><input id="f-area" type="number" placeholder="2.5" step="0.1"></div><div><label>Cultivo Principal</label><input id="f-cult" placeholder="Tomate Cherry, Lechuga..."></div></div><div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-gold" onclick="saveFarmer()">🌱 Registrar + Iniciar KYC</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>');}
+function showModalVote(){openModal('🗳️ Nueva Propuesta de Gobernanza','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div style="grid-column:span 2"><label>Título de la Propuesta *</label><input id="vt-titulo" placeholder="Título claro y conciso..."></div><div style="grid-column:span 2"><label>Descripción</label><textarea id="vt-desc" rows="2" placeholder="Detalles de la propuesta..."></textarea></div><div><label>Tipo</label><select id="vt-tipo"><option>Inversión</option><option>Gasto</option><option>Cambio</option><option>Nuevo Socio</option></select></div><div><label>Monto Involucrado $</label><input id="vt-monto" type="number" placeholder="0"></div><div><label>Fecha Cierre Votación</label><input id="vt-fecha" type="date"></div></div><div style="display:flex;gap:8px;margin-top:14px;"><button class="btn btn-gold" onclick="saveVote()">🗳️ Publicar Propuesta</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>');}
+
+async function saveProgram(){var nom=v('p-nom');if(!nom){toast('⚠ Nombre requerido','#ff1744');return;}var cod='FIIA-PROG-'+(PROGRAMS.length+10).toString().padStart(3,'0');var d={codigo:cod,nombre:nom,tipo:v('p-tipo'),monto_objetivo:_n('p-obj')||0,tasa_rendimiento:_n('p-tasa')||0,plazo_meses:_n('p-plazo')||12,min_inversion:_n('p-min')||0,responsable:v('p-resp')||me&&me.nombre||'Akasha',fecha_cierre:v('p-fecha')||null,estado:'Activo',monto_captado:0,inversores_count:0,tenant_id:'hidroexpo'};await dbQ(function(db){return db.from('fiia_programs').insert(d);});PROGRAMS.push(Object.assign(d,{program_id:'prog-'+Date.now()}));closeModal();toast('🚀 Programa '+cod+' lanzado exitosamente');loadPrograms();}
+async function saveInvestor(){var nom=v('i-nom');if(!nom){toast('⚠ Nombre requerido','#ff1744');return;}var cod='FIIA-INV-'+(INVESTORS.length+10).toString().padStart(3,'0');var d={codigo:cod,nombre:nom,tipo:v('i-tipo'),pais:v('i-pais')||'El Salvador',kyc_status:'Pendiente',capital_invertido:_n('i-cap')||0,tokens_poseidos:0,rendimiento_total:0,roi_actual:0,auto_reinversion:false,nivel:v('i-nivel'),programa_activo:v('i-prog'),fecha_ingreso:new Date().toISOString().split('T')[0],asesor:me&&me.nombre||'Akasha',tenant_id:'hidroexpo'};await dbQ(function(db){return db.from('fiia_investors').insert(d);});INVESTORS.push(Object.assign(d,{investor_id:'inv-'+Date.now()}));closeModal();toast('✅ Inversor '+cod+' registrado — KYC iniciado con Akasha');loadInvestors();}
+async function saveLoan(){var nom=v('ln-nom');if(!nom){toast('⚠ Nombre requerido','#ff1744');return;}var cod='FIIA-LOAN-'+(LOANS.length+10).toString().padStart(3,'0');var monto=_n('ln-monto')||0;var tasa=_n('ln-tasa')||4.5;var plazo=_n('ln-plazo')||6;var cuota=Math.round(monto*(1+tasa/100)/plazo);var hoy=new Date();var venc=new Date(hoy);venc.setMonth(venc.getMonth()+plazo);var d={codigo:cod,borrower_nombre:nom,tipo_prestamo:v('ln-tipo'),monto_principal:monto,tasa_interes:tasa,plazo_meses:plazo,garantia:v('ln-gar'),saldo_pendiente:monto,cuota_mensual:cuota,estado:'Activo',mora_dias:0,fecha_inicio:hoy.toISOString().split('T')[0],fecha_vencimiento:venc.toISOString().split('T')[0],aprobado_por:'Buda IA',tenant_id:'hidroexpo'};await dbQ(function(db){return db.from('fiia_loan_contracts').insert(d);});LOANS.push(Object.assign(d,{loan_id:'loan-'+Date.now()}));closeModal();toast('⚡ Crédito '+cod+' aprobado por Buda IA · $'+fmtM(monto)+' a '+tasa+'%');loadLending();}
+async function saveFarmer(){var nom=v('f-nom');if(!nom){toast('⚠ Nombre requerido','#ff1744');return;}var cod='FARM-'+(FARMERS.length+10).toString().padStart(3,'0');var d={codigo:cod,nombre:nom,dui:v('f-dui'),telefono:v('f-tel'),departamento:v('f-dep'),area_finca_ha:_n('f-area'),cultivos_arr:[v('f-cult')].filter(Boolean),kyc_status:'Pendiente',credit_score:500,saldo_prestamos:0,total_cosechas:0,kg_entregados:0,estado:'EnProceso',tenant_id:'hidroexpo'};await dbQ(function(db){return db.from('crm_farmers').insert(d);});FARMERS.push(Object.assign(d,{farmer_id:'farm-'+Date.now()}));closeModal();toast('🌱 Productor '+cod+' registrado · Akasha iniciando KYC y verificación OCR');loadFarmers();}
+async function saveVote(){var titulo=v('vt-titulo');if(!titulo){toast('⚠ Título requerido','#ff1744');return;}var cierre=v('vt-fecha')||new Date(Date.now()+15*86400000).toISOString().split('T')[0];var d={titulo:titulo,descripcion:v('vt-desc'),tipo:v('vt-tipo'),monto_involucrado:_n('vt-monto')||0,propuesto_por:me&&me.nombre||'Admin',fecha_inicio:new Date().toISOString().split('T')[0],fecha_cierre:cierre,votos_si:0,votos_no:0,tokens_si:0,tokens_no:0,resultado:'Pendiente',estado:'Activo',tenant_id:'hidroexpo'};await dbQ(function(db){return db.from('fiia_governance').insert(d);});GOV.unshift(Object.assign(d,{vote_id:'gov-'+Date.now()}));closeModal();toast('🗳️ Propuesta publicada · Socios notificados vía App + WhatsApp');loadGovernance();}
+
+// ══ HELPERS ══
+function fmtM(n){if(!n&&n!==0)return '0';n=parseFloat(n);if(isNaN(n))return '0';if(Math.abs(n)>=1000000)return (n/1000000).toFixed(1)+'M';if(Math.abs(n)>=1000)return (n/1000).toFixed(1)+'K';return n.toFixed(0);}
+</script>
+</body>
+</html>
